@@ -24,20 +24,21 @@ if uploaded_files:
         st.error(f"Требуются колонки: {', '.join(required_cols)}. Найдено: {', '.join(data.columns)}")
         st.stop()
 
+    # Преобразуем типы и фильтруем баговые нули
     data["Revenue"] = pd.to_numeric(data["Revenue"], errors="coerce")
     data["Price"] = pd.to_numeric(data["Price"], errors="coerce")
     data = data.dropna(subset=["Asset Name","Asset Type","Price","Revenue","Date and Time"])
-    data = data[data["Revenue"]>0]  # удаляем баговые нули
+    data = data[data["Revenue"]>0]
 
     data["Date and Time"] = pd.to_datetime(data["Date and Time"], errors="coerce")
     today = datetime.now().date()
     data = data[data["Date and Time"].dt.date < today]
     data['Date'] = data['Date and Time'].dt.date
 
-    # 1) Считаем суммарное Revenue за день для каждой цены
+    # Считаем дневное суммарное Revenue для каждой цены
     daily_price = data.groupby(['Asset Name','Asset Type','Price','Date'], as_index=False)['Revenue'].sum()
 
-    # 2) Для каждой цены берём среднее дневное Revenue
+    # Для параболы: среднее дневное Revenue на каждую цену
     price_agg = daily_price.groupby(['Asset Name','Asset Type','Price'], as_index=False)['Revenue'].mean()
 
     def revenue_model(x,a,b,c):
